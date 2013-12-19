@@ -93,9 +93,106 @@
         \end{verbatim}
   \end{itemize}
 \end{frame}
-\end{document}
 
 \begin{frame}[fragile]
   \frametitle{Expressions}
-  In functional programming, all expressions result in values, the expression that does nothing (side effects) returns unit type which is equivalent to C++'s $\verb|void|$ type.
+  In functional programming, all expressions result in values, even if the expression is purely side-effecting, the return type is $\verb|unit|$ which is equivalent to C++'s $\verb|void|$ type.
+  \begin{verbatim}
+  def foo(a: Int) {
+    // purely for side effects
+    // does not return anything
+  }
+  > foo: Int => Unit
+  \end{verbatim}
+  The function signature of $\verb|foo|$ is $\verb|foo: Int => Unit|$.
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle[Immutability]
+  Immutability is an epitome of function programming.
+  \begin{verbatim}
+  val l = List() // empty list => []
+  val l1 = 10 :: 11 :: 12 :: l // [10, 11, 12] 
+  val l2 = l1.filter(x => x % 2 == 0) // [10, 12]
+  \end{verbatim}
+  Where are $\verb|l1, l|$ now? They are still persisted in memory and are probably shared by $\verb|l2|$.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Recursion}
+  Recursion is used very extensively in functional programming. Here is a recursive data structure $\verb|Tree|$ and a recursive function $\verb|sum|$.
+  \begin{verbatim}
+  abstract class Tree[B]
+  case class Leaf[B](v: B) extends Tree[B]
+  case class Node[B](l: Tree[B], r: Tree[B])
+    extends Tree[B]
+
+  type IntTree = Tree[Int]
+  
+  def sum(t: Tree[Int]): Int = t match {
+      case Leaf(v) => v
+      case Node(l, r) => sum(l) + sum(r)
+  }
+  \end{verbatim}
+  Notice we used pattern match on the tree, but it's not tail recursive, it will overflow the call stack...
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Recursion}
+  Can Scala compiler do tail recursive optimization to this function? Answser is "no" due to limitation of JVM.
+  Sometimes if you add $\verb|@tailrec|$ annotation to a function, and the last step of your function calls itself, the Scala compiler can do TCO for you. e.g.
+  \begin{verbatim}
+  import scala.annotation.tailrec
+  def factorial(n: Int): Int = {
+    @tailrec def factorialAux(acc: Int, n: Int): Int = {
+      if (n <= 1) acc
+      else factorialAux(n * acc, n - 1)
+    }
+    factorialAux(0, n)
+  }
+  \end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Classes and Objects}
+%%  Scala is also an objected-oriented language. The whole object system of Scala is too complex, we only cover the parts where Scala makes a distinction. 
+  \begin{itemize}
+    \item Class definition and companion object. Each class can have a companion object (like a singleton object) where we can define methods/variables shared by the whole class.
+      \begin{verbatim}
+      class Person(age: Int) {
+        def speaks = "age is " + age
+      }
+
+      object Person {
+        def apply(age: Int): Person {
+          new Person(age)
+        }
+      }
+
+      val p = Person(99)
+      p.speaks // prints "age is 99"
+      \end{verbatim}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Classes and Objects}
+  Traits are similar to Java interfaces. A class or object can extend multiple traits and the interfaces inherited are linearly stacked. They can be abstract or concrete.
+  \begin{verbatim}
+  trait Quacking {
+    def quack = println("Quack quack quack")
+  }
+  trait Swimming {
+    def action = println("Swim swim swim")
+  }
+  trait Yellow {
+    def color = println("Yellow yellow yellow")
+  }
+  class Duck { }
+  val duck = new Duck with Quacking with Swimming with Yellow
+  a.quack // "Quack quack quack"
+  a.color // "Yellow yellow yellow"
+  \end{verbatim}
+\end{frame}
+
+\end{document}
