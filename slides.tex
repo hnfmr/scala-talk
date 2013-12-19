@@ -37,4 +37,65 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]
+  \frametitle{Functions}
+  \begin{itemize}
+  \item In C++ a typical function application look like:
+    \begin{verbatim}
+    int foo(int a, char b, bool c) {
+      // body
+    }
+
+    foo (10, 'x', false);
+    \end{verbatim}
+
+    \pause
+    Functions are not first class citizens, it's hard to compose functions, although it's much better with $\verb|std::function|$
+    and $\verb|bind|$ that came with C++11.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Functions}
+  \begin{itemize}
+  \item In Scala functions can be defined:
+    \begin{verbatim}
+    def foo(a: Int, b: Char, c: Boolean): Int = {
+      if (c) a
+      else b.toInt
+    }
+    \end{verbatim}
+    or in a curried form:
+    \begin{verbatim}
+    def foo(a: Int)(b: Char)(c: Boolean): Int = {
+      if (c) a
+      else b.toInt
+    }
+    \end{verbatim}
+    Observe two things. Scala functions do not use $\verb|return|$ keyword as in C++. Scala functions can be defined as a curried function. These are two distinctive features of functional programming.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Functions}
+  \begin{itemize}
+      \item Currying is the process of transforming a function with multiple arguments into chained partial applications, e.g.
+      \begin{verbatim}
+        val f1: Char => Boolean => Int = foo(10)
+        val value = f1('x')(true) // 10
+      \end{verbatim}
+      \item In OCaml this is much more concise:
+        \begin{verbatim}
+        let f a b c = if c then a else int_of_char b
+        > f : int -> char -> bool -> int
+        let f1 = f 10
+        let value = f1 'x' true
+        \end{verbatim}
+  \end{itemize}
+\end{frame}
 \end{document}
+
+\begin{frame}[fragile]
+  \frametitle{Expressions}
+  In functional programming, all expressions result in values, the expression that does nothing (side effects) returns unit type which is equivalent to C++'s $\verb|void|$ type.
+\end{frame}
