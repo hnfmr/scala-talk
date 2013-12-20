@@ -86,7 +86,9 @@
       \end{verbatim}
       \item In OCaml this is much more concise:
         \begin{verbatim}
-        let f a b c = if c then a else int_of_char b
+        let f a b c =
+          if c then a
+          else int_of_char b
         > f : int -> char -> bool -> int
         let f1 = f 10
         let value = f1 'x' true
@@ -96,26 +98,25 @@
 
 \begin{frame}[fragile]
   \frametitle{Expressions}
-  In functional programming, all expressions result in values, even if the expression is purely side-effecting, the return type is $\verb|unit|$ which is equivalent to C++'s $\verb|void|$ type.
+  In Scala or functional programming, all expressions result in values, even if the expression is purely side-effecting, the return type is $\verb|Unit|$ which is equivalent to C++'s $\verb|void|$ type.
   \begin{verbatim}
   def foo(a: Int) {
     // purely for side effects
     // does not return anything
   }
-  > foo: Int => Unit
   \end{verbatim}
   The function signature of $\verb|foo|$ is $\verb|foo: Int => Unit|$.
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle[Immutability]
+  \frametitle{Immutability}
   Immutability is an epitome of function programming.
   \begin{verbatim}
   val l = List() // empty list => []
   val l1 = 10 :: 11 :: 12 :: l // [10, 11, 12] 
   val l2 = l1.filter(x => x % 2 == 0) // [10, 12]
   \end{verbatim}
-  Where are $\verb|l1, l|$ now? They are still persisted in memory and are probably shared by $\verb|l2|$.
+  Immutability is achieved by copying and modification is only done to copied item. Unmodified items can be shared, i.e. persistence.
 \end{frame}
 
 \begin{frame}[fragile]
@@ -144,7 +145,8 @@
   \begin{verbatim}
   import scala.annotation.tailrec
   def factorial(n: Int): Int = {
-    @tailrec def factorialAux(acc: Int, n: Int): Int = {
+    @tailrec
+    def factorialAux(acc: Int, n: Int): Int = {
       if (n <= 1) acc
       else factorialAux(n * acc, n - 1)
     }
@@ -176,23 +178,159 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Classes and Objects}
+  \frametitle{Traits}
   Traits are similar to Java interfaces. A class or object can extend multiple traits and the interfaces inherited are linearly stacked. They can be abstract or concrete.
   \begin{verbatim}
   trait Quacking {
-    def quack = println("Quack quack quack")
+    def quack() = println("Quack quack quack")
   }
   trait Swimming {
-    def action = println("Swim swim swim")
-  }
-  trait Yellow {
-    def color = println("Yellow yellow yellow")
+    def swim() = println("Swim swim swim")
   }
   class Duck { }
-  val duck = new Duck with Quacking with Swimming with Yellow
-  a.quack // "Quack quack quack"
-  a.color // "Yellow yellow yellow"
+  val duck = new Duck with Quacking with Swimming
+  a.quack() // "Quack quack quack"
+  a.swim() // "Swim swim swim"
+  \end{verbatim}
+  This is just a glimpse of traits...
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Type Parameters}
+  \begin{itemize}
+      \item Generic classes and functions are like C++ templates
+        \begin{verbatim}
+        class Pair[T, S](val first: T, val second: S)
+
+        def getMiddle(a: Array[T]) = ...
+        \end{verbatim}
+      \item Bounds
+        \begin{verbatim}
+        class Pair[T <: Comparable[T]] // lower bound
+        class Pair[T <% Comparable[T]] // view bound
+        \end{verbatim}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Covariance}
+  If $\verb|Student|$ is a subtype of $\verb|Person|$ then $\verb|Pair[Student]|$ is a subtype of
+  $\verb|Pair[Person]|$ if
+  \begin{verbatim}
+  class Pair[+T](val first: T, val second: T)
+  \end{verbatim}
+  The above relationship is called covariance.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Contravariance}
+  Variance with the opposite direction of covariance is contravariance. Suppose
+  \begin{verbatim}
+  trait Friend[-T] {
+    def befriend(someone: T) 
+  }
+  \end{verbatim}
+  denotes someone who wants to befriend any type $\verb|T|$. Now consider
+  \begin{verbatim}
+  def makeFriendsWith(s: Student, f: Friend[Student]) {
+    f.befriend(s)
+  }
+  class Person extends Friend[Person]
+  class Student extends Person
+  val susan = new Student
+  val fred = new Person
   \end{verbatim}
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Type Projections}
+  Suppose we have the following class definition:
+  \begin{verbatim}
+    class Team {
+      class Member(val name: String) {
+        val contacts = new ArrayBuffer[Member]
+      }
+      private val members = new ArrayBuffer[Member]
+      def join(name: String) = {
+        val m = new Member(name)
+        members += m
+        m
+      }
+    }
+    \end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Type Projections}
+  Consider the following scenario:
+  \begin{verbatim}
+  val dfm = new Team
+  val ntps = new Team
+
+  val xin = dfm.join("Xin") // dfm.Member
+  val cloud = ntps.join("Cloud") // ntps.Member
+
+  xin.contacts += cloud // does not compile
+  \end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Type Projections}
+  Now consider this:
+  \begin{verbatim}
+  class Team {
+    class Member(val name: String) {
+      val contacts = new ArrayBuffer[Team#Member]
+    }
+    ...
+  }
+  \end{verbatim}
+  $\verb|Team#Member|$ means "a Member of any Team"
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Structural Types}
+  \begin{verbatim}
+  def appendLines(target: { def append(str: String): Any },
+                  lines: Iterable[String]) {
+    for (l <- lines) { target.append(l); }
+  }
+  \end{verbatim}
+  This function accepts any object that implements $\verb|append|$ method.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Abstract Types}
+  \begin{verbatim}
+    traits Reader {
+      type Contents
+      def read(fileName: String): Contents
+    }
+
+    traits StringReader {
+      type Contents = String
+      def read(fileName: String): Contents = ...
+    }
+  \end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Abstract Type using parameters}
+  \begin{verbatim}
+  trait Reader[C] {
+    def read(fileName: String): C
+  }
+
+  trait StringReader extends Reader[String] {
+    def read(fileName: String): String = ...
+  }
+
+  trait ImageReader extends Reader[Image] {
+    def read(fileName: String): Image = ...
+  }
+  \end{verbatim}
+\end{frame}
+
+
 
 \end{document}
