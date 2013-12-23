@@ -12,28 +12,13 @@
 \begin{frame}
   \frametitle{Outline - Scala}
   \begin{itemize}
-  \item Functional programming through $\lambda$-calculus
+  \item Functions, Expressions
     \pause
-  \item Scala syntax in 10 minutes
+  \item Immutability, Recursion
     \pause
-  \item Scala object system and pattern matching
+  \item Class, Objects, Traits
     \pause
-  \item Scala type system and tools for building abstractions
-    \pause
-    \item Reactive programming
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Outline - OCaml}
-  \begin{itemize}
-    \item $\lambda$-calculus in OCaml
-      \pause
-    \item Lists, variants and pattern matching
-      \pause
-    \item Powerful module system
-      \pause
-    \item Concurrent programming with Async
+  \item Scala type system
   \end{itemize}
 \end{frame}
 
@@ -93,6 +78,7 @@
         let f1 = f 10
         let value = f1 'x' true
         \end{verbatim}
+        This the beauty of Hindley-Milner type inference.
   \end{itemize}
 \end{frame}
 
@@ -120,6 +106,45 @@
 \end{frame}
 
 \begin{frame}[fragile]
+  \frametitle{Higher order functions}
+  Functions can be treated as first class values:
+  \begin{verbatim}
+  def valueAtOneQuarter(f: (Double) => Double) = f(0.25)
+  valueAtOneQuarter(ceil _) // 1.0
+  valueAtOneQuarter(sqrt _) // 0.5
+
+  def mulBy(factor: Double) = (x: Double) => factor * x
+  val quintuple = mulBy(5)
+
+  auto mulBy = [](double factor) {
+    return [=](double y) { return factor * y; }
+  };
+
+  auto quintuple = mulby(5); 
+  \end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{More useful higher order functions}
+  Suppose we have a list: $\verb|val list = List(83, 99, 97, 108, 97)|$:
+  \begin{verbatim}
+  list.filter(_ % 2 != 0) // [83, 99, 97, 97]
+  list.map(_.toChar).mkString // "Scala"
+  list.reduceLeft(_ * _) // -240049268 - strange!
+  list.foldLeft(1)(_ * _) // same as above
+
+  val f = Future { 10 }; val g = Future { 3 }
+  f flatMap { (x: Int) => g map { (y: Int) => x + y } }
+
+  val h = for {
+    x: Int <- f // return result of f: 10
+    y: Int <- g // return result of g: 3
+  } yield x + y
+  \end{verbatim}
+  Which is better?
+\end{frame}
+
+\begin{frame}[fragile]
   \frametitle{Recursion}
   Recursion is used very extensively in functional programming. Here is a recursive data structure $\verb|Tree|$ and a recursive function $\verb|sum|$.
   \begin{verbatim}
@@ -130,7 +155,7 @@
 
   type IntTree = Tree[Int]
   
-  def sum(t: Tree[Int]): Int = t match {
+  def sum(t: IntTree): Int = t match {
       case Leaf(v) => v
       case Node(l, r) => sum(l) + sum(r)
   }
@@ -159,7 +184,7 @@
   \frametitle{Classes and Objects}
 %%  Scala is also an objected-oriented language. The whole object system of Scala is too complex, we only cover the parts where Scala makes a distinction. 
   \begin{itemize}
-    \item Class definition and companion object. Each class can have a companion object (like a singleton object) where we can define methods/variables shared by the whole class.
+    \item Class definition and companion object. Each class can have one companion object (like a singleton object) where we can define methods/variables shared by the whole class.
       \begin{verbatim}
       class Person(age: Int) {
         def speaks = "age is " + age
